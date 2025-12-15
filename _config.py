@@ -13,23 +13,22 @@ _DEFAULTS = {
     "VEGA_PER_TRADE": 100,
 }
 
+_DEFAULT_OUTPUT = "/flashdata/llanteigne/earning_data/"
+_DEFAULTS = {
+    "USE_MULTIPROCESSING": False,
+    "MAX_WORKERS": 5,
+    "SAVE_RESULTS": True,
+    "PIVOT": True,
+    "OUTPUT_BASE": _DEFAULT_OUTPUT,
+    "VEGA_PER_TRADE": 100,
+}
+
 _CONFIG_PATH = os.getenv(
     "EARNING_TRADE_CONFIG",
     str(Path(__file__).parent / "config.json"),
 )
 
 _config_data = {}
-try:
-    cfg_path = Path(_CONFIG_PATH)
-    if cfg_path.exists():
-        with open(cfg_path, "r") as f:
-            _config_data = json.load(f)
-        print(f"✅ Loaded config from {cfg_path}")
-    else:
-        print(f"⚠️ Config file not found at {cfg_path}, using defaults.")
-except Exception as e:
-    print(f"⚠️ Failed to read config file {cfg_path}: {e}")
-    _config_data = {}
 
 
 # ---------------------------------------------------------------------
