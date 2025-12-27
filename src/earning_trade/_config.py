@@ -1,9 +1,9 @@
 from __future__ import annotations
+
 import os
-import json
 from pathlib import Path
 
-_DEFAULT_OUTPUT = "/flashdata/llanteigne/earning_data/"
+_DEFAULT_OUTPUT = Path(__file__).parent.parent.resolve() / "data"
 _DEFAULTS = {
     "USE_MULTIPROCESSING": False,
     "MAX_WORKERS": 5,
@@ -13,19 +13,10 @@ _DEFAULTS = {
     "VEGA_PER_TRADE": 100,
 }
 
-_DEFAULT_OUTPUT = "/flashdata/llanteigne/earning_data/"
-_DEFAULTS = {
-    "USE_MULTIPROCESSING": False,
-    "MAX_WORKERS": 5,
-    "SAVE_RESULTS": True,
-    "PIVOT": True,
-    "OUTPUT_BASE": _DEFAULT_OUTPUT,
-    "VEGA_PER_TRADE": 100,
-}
 
 _CONFIG_PATH = os.getenv(
     "EARNING_TRADE_CONFIG",
-    str(Path(__file__).parent / "config.json"),
+    str(Path(__file__).parent.parent.resolve() / "configs" / "config.json"),
 )
 
 _config_data = {}

@@ -1,11 +1,14 @@
 from __future__ import annotations
-import polars as pl
-from pathlib import Path
+
 import datetime
-from onepipeline.laurent_playground.tradedesk_research.earning_trade._config import (
+from pathlib import Path
+
+import polars as pl
+
+from earning_trade._config import (
     _get_output_base,
 )
-from onepipeline.laurent_playground.tradedesk_research.earning_trade._logging import (
+from earning_trade._logging import (
     get_logger,
 )
 
@@ -73,7 +76,7 @@ class BacktestAggregator:
             self.logger.warning("No data to aggregate.")
             return df
         group_cols = group_cols or ["tradingDate", "pos_sign"]
-        # NOTE: I had a bug in my data generation part, keeping lines below until I re-run the data fix.
+        # NOTE: I had a bug in my data generation part
         df = df.with_columns(
             pl.when(pl.col("pos_sign") == "Short")
             .then(-pl.col("straddle_pnl"))
@@ -83,9 +86,7 @@ class BacktestAggregator:
 
         if vega_per_trade:
             if "straddle_ve" not in df.columns:
-                df = df.with_columns(
-                    straddle_ve=(pl.col("enter_ve_Call") + pl.col("enter_ve_Put"))
-                )
+                df = df.with_columns(straddle_ve=(pl.col("enter_ve_Call") + pl.col("enter_ve_Put")))
             df = df.with_columns(
                 size=(pl.lit(vega_per_trade) / pl.col("straddle_ve"))
             ).with_columns(straddle_pnl_ve=pl.col("size") * pl.col(pnl_col))
@@ -98,9 +99,7 @@ class BacktestAggregator:
             .agg(pl.col(pnl_col).sum().alias("daily_pnl"))
             .sort("tradingDate")
         )
-        self.logger.info(
-            f"Aggregated {df.height:,} rows → {agg_df.height:,} daily records."
-        )
+        self.logger.info(f"Aggregated {df.height:,} rows → {agg_df.height:,} daily records.")
         return agg_df
 
 
@@ -125,9 +124,7 @@ class Backtest:
             self.logger.warning("No data merged for backtest run.")
             return pl.DataFrame()
 
-        df_daily = self.aggregator.aggregate_daily(
-            df_all, vega_per_trade=self.vega_per_trade
-        )
+        df_daily = self.aggregator.aggregate_daily(df_all, vega_per_trade=self.vega_per_trade)
 
         if self.save:
             out = self.aggregator.base_dir / f"backtest_daily_{self.include}.parquet"
@@ -157,9 +154,7 @@ class BacktestAnalysis:
         df = self.df
         if pnl_col_name not in df.columns:
             raise ValueError(f"PnL column '{pnl_col_name}' not found.")
-        pnl_series = (
-            df.get_column(pnl_col_name).drop_nulls().filter(df[pnl_col_name] != 0.0)
-        )
+        pnl_series = df.get_column(pnl_col_name).drop_nulls().filter(df[pnl_col_name] != 0.0)
         if pnl_series.len() < 2:
             return pl.DataFrame({"Statistic": ["Not enough data"], "Value": [None]})
         stats = {}
@@ -171,9 +166,9 @@ class BacktestAnalysis:
         r = pnl_series / portfolio_base
         r_std = r.std()
         if r_std and r_std > 0:
-            stats["Annualized Sharpe Ratio"] = (
-                (r.mean() - risk_free_rate_daily) / r_std
-            ) * (annualization_factor**0.5)
+            stats["Annualized Sharpe Ratio"] = ((r.mean() - risk_free_rate_daily) / r_std) * (
+                annualization_factor**0.5
+            )
         else:
             stats["Annualized Sharpe Ratio"] = 0.0
 
@@ -185,9 +180,7 @@ class BacktestAnalysis:
             stats["Annualized Total Return (%)"] = annualized_return * 100
         else:
             stats["Annualized Total Return (%)"] = 0.0
-        stats["Annualized Return Std Dev (%)"] = (
-            r_std * (annualization_factor**0.5) * 100
-        )
+        stats["Annualized Return Std Dev (%)"] = r_std * (annualization_factor**0.5) * 100
 
         stats["Win Rate (%)"] = (pnl_series > 0).mean() * 100
         stats["Average Win Amount"] = pnl_series.filter(pnl_series > 0).mean()
@@ -198,9 +191,7 @@ class BacktestAnalysis:
 
         # --- Position proportions ---
         if pos_sign_col_name in df.columns:
-            signals = df.filter(pl.col(pnl_col_name) != 0)[
-                pos_sign_col_name
-            ].drop_nulls()
+            signals = df.filter(pl.col(pnl_col_name) != 0)[pos_sign_col_name].drop_nulls()
             n_trades = signals.len()
             if n_trades > 0:
                 long_trades = signals.filter(signals == "Long").len()
@@ -215,21 +206,13 @@ class BacktestAnalysis:
 
         # --- Drawdown windows ---
         if n >= 5:
-            stats["Worst 5d Cum PnL (%)"] = (
-                pnl_series.rolling_sum(5).min() / portfolio_base * 100
-            )
+            stats["Worst 5d Cum PnL (%)"] = pnl_series.rolling_sum(5).min() / portfolio_base * 100
         if n >= 20:
-            stats["Worst 20d Cum PnL (%)"] = (
-                pnl_series.rolling_sum(20).min() / portfolio_base * 100
-            )
+            stats["Worst 20d Cum PnL (%)"] = pnl_series.rolling_sum(20).min() / portfolio_base * 100
 
-        return pl.DataFrame(
-            {"Statistic": list(stats.keys()), "Value": list(stats.values())}
-        )
+        return pl.DataFrame({"Statistic": list(stats.keys()), "Value": list(stats.values())})
 
-    def equity_curve(
-        self, pnl_col: str = "daily_pnl", base: float = 1_000_000.0
-    ) -> pl.DataFrame:
+    def equity_curve(self, pnl_col: str = "daily_pnl", base: float = 1_000_000.0) -> pl.DataFrame:
         df = self.df.sort("tradingDate").with_columns(
             equity=(pl.col(pnl_col).cum_sum() + base).alias("equity")
         )

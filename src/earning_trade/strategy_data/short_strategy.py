@@ -1,6 +1,8 @@
 from __future__ import annotations
+
 import polars as pl
-from onepipeline.laurent_playground.tradedesk_research.earning_trade.strategy_data.base_strategy import (
+
+from earning_trade.strategy_data.base_strategy import (
     EarningsTradeBase,
 )
 
@@ -8,15 +10,11 @@ from onepipeline.laurent_playground.tradedesk_research.earning_trade.strategy_da
 class EarningsTradeShort(EarningsTradeBase):
     PNL_SIGN = -1
 
-    def _get_enter_position(
-        self, earn_dates: pl.LazyFrame, ticker: str
-    ) -> pl.LazyFrame:
+    def _get_enter_position(self, earn_dates: pl.LazyFrame, ticker: str) -> pl.LazyFrame:
         opt_data = self._get_option_data()
 
         opt_data = (
-            opt_data.with_columns(
-                dist_to_strike=(pl.col("okey_xx") - pl.col("uClose")).abs()
-            )
+            opt_data.with_columns(dist_to_strike=(pl.col("okey_xx") - pl.col("uClose")).abs())
             .sort(["tradingDate", "okey_cp", "okey_date", "dist_to_strike"])
             .group_by(["tradingDate", "okey_cp", "okey_date"], maintain_order=True)
             .first()
@@ -48,9 +46,7 @@ class EarningsTradeShort(EarningsTradeBase):
             )
             .filter(pl.col("tradingDate") == pl.col("enterTradeDate"))
             .with_columns(
-                dist_exp_post_earn=(
-                    pl.col("okey_date") - pl.col("enterTradeDate")
-                ).dt.total_days()
+                dist_exp_post_earn=(pl.col("okey_date") - pl.col("enterTradeDate")).dt.total_days()
             )
             .filter(pl.col("dist_exp_post_earn") > 0)
             .sort(["enterTradeDate", "okey_cp", "dist_exp_post_earn"])

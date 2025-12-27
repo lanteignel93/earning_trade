@@ -1,29 +1,27 @@
 from __future__ import annotations
-import os
+
+from collections.abc import Iterable
 from concurrent.futures import ProcessPoolExecutor, as_completed
-from functools import partial
-from typing import Iterable
 
 from tqdm.auto import tqdm
-from onepipeline.laurent_playground.tradedesk_research.earning_trade._utils import (
-    _get_universe,
-)
-from onepipeline.laurent_playground.tradedesk_research.earning_trade._config import (
-    _get_output_dir,
-    USE_MULTIPROCESSING,
+
+from earning_trade._config import (
     MAX_WORKERS,
-    SAVE_RESULTS,
     PIVOT,
+    SAVE_RESULTS,
+    USE_MULTIPROCESSING,
+    _get_output_dir,
 )
-from onepipeline.laurent_playground.tradedesk_research.earning_trade._logging import (
+from earning_trade._logging import (
     get_logger,
 )
-
-
-from onepipeline.laurent_playground.tradedesk_research.earning_trade.strategy_data.long_strategy import (
+from earning_trade._utils import (
+    _get_universe,
+)
+from earning_trade.strategy_data.long_strategy import (
     EarningsTradeLong,
 )
-from onepipeline.laurent_playground.tradedesk_research.earning_trade.strategy_data.short_strategy import (
+from earning_trade.strategy_data.short_strategy import (
     EarningsTradeShort,
 )
 
@@ -44,9 +42,7 @@ def _run_one(ticker: str, *, save: bool, pivot: bool):
     short_out = _get_output_dir("short")
 
     long_df = EarningsTradeLong(ticker).run(output_dir=long_out, save=save, pivot=pivot)
-    short_df = EarningsTradeShort(ticker).run(
-        output_dir=short_out, save=save, pivot=pivot
-    )
+    short_df = EarningsTradeShort(ticker).run(output_dir=short_out, save=save, pivot=pivot)
 
     long_n = _safe_len(long_df)
     short_n = _safe_len(short_df)
@@ -68,13 +64,8 @@ def main():
 
     if USE_MULTIPROCESSING and len(universe) > 1:
         with ProcessPoolExecutor(max_workers=MAX_WORKERS) as ex:
-            futs = {
-                ex.submit(_run_one, tk, save=SAVE_RESULTS, pivot=PIVOT): tk
-                for tk in universe
-            }
-            for _ in tqdm(
-                as_completed(futs), total=len(futs), desc="Running strategies"
-            ):
+            futs = {ex.submit(_run_one, tk, save=SAVE_RESULTS, pivot=PIVOT): tk for tk in universe}
+            for _ in tqdm(as_completed(futs), total=len(futs), desc="Running strategies"):
                 pass
     else:
         for tk in tqdm(universe, desc="Running strategies"):

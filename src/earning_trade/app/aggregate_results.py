@@ -1,15 +1,14 @@
-# earning_trade/app/aggregate_results.py
-
 from __future__ import annotations
-from onepipeline.laurent_playground.tradedesk_research.earning_trade._config import (
+
+from earning_trade._config import (
     VEGA_PER_TRADE,
 )
-from onepipeline.laurent_playground.tradedesk_research.earning_trade.backtest.backtest import (
+from earning_trade._logging import (
+    get_logger,
+)
+from earning_trade.backtest.backtest import (
     Backtest,
     BacktestAnalysis,
-)
-from onepipeline.laurent_playground.tradedesk_research.earning_trade._logging import (
-    get_logger,
 )
 
 
@@ -36,9 +35,7 @@ def main(include: str = "both"):
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description="Aggregate and analyze backtest results"
-    )
+    parser = argparse.ArgumentParser(description="Aggregate and analyze backtest results")
     parser.add_argument(
         "--include",
         choices=["long", "short", "both"],

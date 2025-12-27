@@ -1,14 +1,16 @@
 from __future__ import annotations
-import polars as pl
-from pathlib import Path
-from onepipeline.laurent_playground.tradedesk_research.earning_trade._utils import (
-    _get_earnings_dates,
-)
-from onepipeline.laurent_playground.tradedesk_research.earning_trade._logging import (
-    get_logger,
-)
 
 from abc import abstractmethod
+from pathlib import Path
+
+import polars as pl
+
+from earning_trade._logging import (
+    get_logger,
+)
+from earning_trade._utils import (
+    _get_earnings_dates,
+)
 
 
 class EarningsTradeBase:
@@ -18,7 +20,7 @@ class EarningsTradeBase:
 
     @property
     def cat(self):
-        from onepipeline.conf import cat
+        from earning_trade.mock_catalog import cat
 
         return cat
 
@@ -77,12 +79,8 @@ class EarningsTradeBase:
                 ],
             )
             .sort("tradingDate")
-            .with_columns(
-                straddle_pnl=self.PNL_SIGN * (pl.col("pnl_Call") + pl.col("pnl_Put"))
-            )
-            .with_columns(
-                straddle_ve=(pl.col("enter_ve_Call") + pl.col("enter_ve_Put"))
-            )
+            .with_columns(straddle_pnl=self.PNL_SIGN * (pl.col("pnl_Call") + pl.col("pnl_Put")))
+            .with_columns(straddle_ve=(pl.col("enter_ve_Call") + pl.col("enter_ve_Put")))
         )
         return df
 
@@ -111,14 +109,10 @@ class EarningsTradeBase:
             self.earn_dates = _get_earnings_dates(self.ticker)
             count = self.earn_dates.collect().height
             if count < self.COUNT_LIMIT:
-                self.logger.info(
-                    f"{self.ticker} [{strat}]: skipping (only {count} earnings data)."
-                )
+                self.logger.info(f"{self.ticker} [{strat}]: skipping (only {count} earnings data).")
                 return None
         except Exception as e:
-            self.logger.exception(
-                f"{self.ticker} [{strat}]: error fetching earnings dates ({e})"
-            )
+            self.logger.exception(f"{self.ticker} [{strat}]: error fetching earnings dates ({e})")
             return None
 
         try:
@@ -130,9 +124,7 @@ class EarningsTradeBase:
             if save and output_dir is not None:
                 self._save_result(df, output_dir)
 
-            self.logger.info(
-                f"Completed {self.ticker} [{strat}] ({len(df)} rows). Saved={save}"
-            )
+            self.logger.info(f"Completed {self.ticker} [{strat}] ({len(df)} rows). Saved={save}")
             return df
         except Exception as e:
             self.logger.exception(f"{self.ticker} [{strat}]: run failed ({e})")

@@ -1,5 +1,6 @@
-from onepipeline.conf import cat
 import polars as pl
+
+from earning_trade.mock_catalog import cat
 
 SECTOR_INDXES = [
     "XLB",
