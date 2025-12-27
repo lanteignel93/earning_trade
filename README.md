@@ -11,12 +11,13 @@ This project uses a modern `src` layout for reliability and testing.
 ```text
 earning_trade/
 ├── src/earning_trade/
-│   ├── app/           # Execution/Dashboard logic
-│   ├── backtest/      # Historical simulation engine
-│   ├── _config.py      # Strategy parameters
-│   └── _utils.py       # Data loaders & math helpers
-├── notebooks/         # Research & Prototyping
-└── tests/             # Unit tests
+│   ├── app/                # Execution/Dashboard logic
+│   ├── backtest/           # Historical simulation engine
+│   ├── strategy_data/      # Data Generation
+│   ├── _config.py          # Strategy parameters
+│   └── _utils.py           # Data loaders & math helpers
+├── notebooks/              # Research & Prototyping
+└── tests/                  # Unit tests
 ```
 
 # Getting Started
